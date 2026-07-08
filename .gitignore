@@ -1,0 +1,16 @@
+# 密码文件，永不提交
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# 数据文件（太大了，或者含敏感信息）
+data/
+
+# 输出（日志、图表、报告）
+output/
+
+# 系统文件
+.DS_Store
+Thumbs.db
