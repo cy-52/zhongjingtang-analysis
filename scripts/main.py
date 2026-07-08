@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 import argparse
 
-from config import RUN_MONTH, OUTPUT, CHARTS, setup_logging
+from config import RUN_MONTH, OUTPUT, CHARTS, setup_logging, get_kingdee_engine
 from db_loader import (load_products, load_customers, load_orders,
                        load_inventory, load_collections, load_dealer_orders)
 
@@ -74,6 +74,7 @@ logger.info(f"===== 第2步：数据分析（销售:{DO_SALES} 库存:{DO_INV} �
 
 # 2.1 月度趋势
 logger.info("  [1/8] 月度趋势")
+all_orders["order_month"] = all_orders["order_month"].astype(str)
 monthly = (all_orders.groupby("order_month").agg(
     订单数=("order_id", "count"),
     销售额=("amount", "sum"),
@@ -130,6 +131,18 @@ if not coll.empty and total_receivable > 0:
 logger.info("  [8/8] 订单状态")
 order_status = all_orders.groupby("status").size().reset_index()
 order_status.columns = ["状态", "数量"]
+
+# ── 存回 MySQL（按月追加，不覆盖历史）──
+report_month = args.month
+engine = get_kingdee_engine()
+products.assign(report_month=report_month).to_sql("report_products", engine, if_exists="append", index=False)
+all_orders.assign(report_month=report_month).to_sql("report_orders", engine, if_exists="append", index=False)
+if not inv.empty:
+    inv.assign(report_month=report_month).to_sql("report_inventory", engine, if_exists="append", index=False)
+if not coll.empty:
+    coll.assign(report_month=report_month).to_sql("report_collections", engine, if_exists="append", index=False)
+logger.info(f"  清洗结果已存回 MySQL（月份: {report_month}）")
+engine.dispose()
 
 # 关键指标汇总
 if len(monthly) > 0:
