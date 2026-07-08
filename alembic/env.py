@@ -1,13 +1,26 @@
+import os
+from pathlib import Path
 from logging.config import fileConfig
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")  # 读取项目根目录的 .env
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
+
+db_user = os.getenv("KINGDEE_DB_USER", "root")
+db_pass = os.getenv("KINGDEE_DB_PASSWORD", "")
+db_host = os.getenv("KINGDEE_DB_HOST", "127.0.0.1")
+db_port = os.getenv("KINGDEE_DB_PORT", "3306")
+db_name = os.getenv("KINGDEE_DB_NAME", "mugwort")
+config.set_main_option(
+    "sqlalchemy.url",
+    f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
