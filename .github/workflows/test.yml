@@ -34,12 +34,10 @@ jobs:
           python-version: '3.11'
 
       - name: 安装依赖
-        run: pip install pandas numpy pymysql sqlalchemy openpyxl pytest python-dotenv matplotlib requests
+        run: pip install pandas numpy pymysql sqlalchemy openpyxl pytest python-dotenv matplotlib requests alembic
 
       - name: 初始化测试数据库
-        run: |
-          sudo apt-get install -y mysql-client
-          mysql -h 127.0.0.1 -P 3306 -u root -ptest123 mugwort < tests/schema.sql
+        run: python -m alembic upgrade head
 
       - name: 运行测试
         env:
