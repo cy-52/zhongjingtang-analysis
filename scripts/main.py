@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 import argparse
 
-from config import RUN_MONTH, OUTPUT, CHARTS, setup_logging, get_kingdee_engine
+from config import RUN_MONTH, OUTPUT, CHARTS, setup_logging, get_analysis_engine
 from db_loader import (load_products, load_customers, load_orders,
                        load_inventory, load_collections, load_dealer_orders)
 
@@ -134,15 +134,15 @@ order_status.columns = ["状态", "数量"]
 
 # ── 存回 MySQL（按月追加，不覆盖历史）──
 report_month = args.month
-engine = get_kingdee_engine()
-products.assign(report_month=report_month).to_sql("report_products", engine, if_exists="append", index=False)
-all_orders.assign(report_month=report_month).to_sql("report_orders", engine, if_exists="append", index=False)
+anal_engine = get_analysis_engine()
+products.assign(report_month=report_month).to_sql("report_products", anal_engine, if_exists="append", index=False)
+all_orders.assign(report_month=report_month).to_sql("report_orders", anal_engine, if_exists="append", index=False)
 if not inv.empty:
-    inv.assign(report_month=report_month).to_sql("report_inventory", engine, if_exists="append", index=False)
+    inv.assign(report_month=report_month).to_sql("report_inventory", anal_engine, if_exists="append", index=False)
 if not coll.empty:
-    coll.assign(report_month=report_month).to_sql("report_collections", engine, if_exists="append", index=False)
-logger.info(f"  清洗结果已存回 MySQL（月份: {report_month}）")
-engine.dispose()
+    coll.assign(report_month=report_month).to_sql("report_collections", anal_engine, if_exists="append", index=False)
+logger.info(f"  清洗结果已存入报表库 analysis（月份: {report_month}）")
+anal_engine.dispose()
 
 # 关键指标汇总
 if len(monthly) > 0:
