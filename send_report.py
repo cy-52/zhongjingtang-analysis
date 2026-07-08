@@ -1,11 +1,30 @@
 """
-报告发送模块 — 分析完成后自动发送邮件或钉钉通知
+报告发送模块 — 分析完成后自动发送邮件或企业微信/钉钉通知
 """
 import smtplib
 import os
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+
+
+def send_wechat(body):
+    """发到企业微信群机器人。Webhook 地址配在 .env 的 WECHAT_WEBHOOK 里"""
+    webhook = os.getenv("WECHAT_WEBHOOK", "")
+    if not webhook:
+        print(f"[通知] 企业微信未配置，报告摘要:\n{body[:500]}")
+        return False
+
+    try:
+        resp = requests.post(webhook, json={
+            "msgtype": "text",
+            "text": {"content": body}
+        }, timeout=10)
+        return resp.status_code == 200
+    except Exception as e:
+        print(f"[企业微信发送失败] {e}")
+        return False
 
 
 def send_email(subject, body, to_emails=None):
