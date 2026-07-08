@@ -1,0 +1,57 @@
+name: 自动化测试
+
+on:
+  push:
+    branches: [main, dev, test]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test123
+          MYSQL_DATABASE: mugwort
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          pip install pandas numpy pymysql sqlalchemy openpyxl pytest python-dotenv matplotlib requests
+
+      - name: 运行测试
+        env:
+          KINGDEE_DB_TYPE: mysql
+          KINGDEE_DB_HOST: 127.0.0.1
+          KINGDEE_DB_PORT: 3306
+          KINGDEE_DB_USER: root
+          KINGDEE_DB_PASSWORD: test123
+          KINGDEE_DB_NAME: mugwort
+          UFIDA_DB_TYPE: mysql
+          UFIDA_DB_HOST: 127.0.0.1
+          UFIDA_DB_PORT: 3306
+          UFIDA_DB_USER: root
+          UFIDA_DB_PASSWORD: test123
+          UFIDA_DB_NAME: mugwort
+          ANALYSIS_DB_TYPE: mysql
+          ANALYSIS_DB_HOST: 127.0.0.1
+          ANALYSIS_DB_PORT: 3306
+          ANALYSIS_DB_USER: root
+          ANALYSIS_DB_PASSWORD: test123
+          ANALYSIS_DB_NAME: mugwort
+        run: |
+          pytest tests/ -v --tb=short
