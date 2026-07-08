@@ -37,24 +37,40 @@ def send_email(subject, body, to_emails=None):
         return False
 
 
-def summary_report(monthly, top_products, total_receivable, total_collected):
-    """生成一份简洁的文字摘要，可以发邮件或发微信"""
+def summary_report(monthly, top_products, total_receivable, total_collected,
+                   inv_alert_count=0, debt_top=None):
+    """生成一份简洁的文字摘要，可发邮件或微信"""
     lines = [
         f"仲景堂月度销售摘要 — {datetime.now().strftime('%Y-%m-%d')}",
         "=" * 40,
     ]
+
+    # 月度概况
     if len(monthly) > 0:
         latest = monthly.iloc[-1]
         best = monthly.loc[monthly["销售额"].idxmax()]
         lines.append(f"本月订单: {int(latest['订单数'])} 单 | 销售额: {latest['销售额']:,.0f} 元")
         lines.append(f"年度最高: {best['order_month']} | {best['销售额']:,.0f} 元")
 
+    # 热销 TOP5
     if not top_products.empty:
-        tp = top_products.iloc[0]
-        lines.append(f"热销TOP1: {tp['产品']}（{int(tp['销量'])} 件 / {tp['销售额']:,.0f} 元）")
+        lines.append("\n热销产品 TOP5:")
+        for i, (_, row) in enumerate(top_products.head(5).iterrows(), 1):
+            lines.append(f"  {i}. {row['产品']} — {int(row['销量'])} 件 / {row['销售额']:,.0f} 元")
 
+    # 回款
     if total_receivable > 0:
         rate = total_collected / total_receivable * 100
-        lines.append(f"回款率: {rate:.1f}% | 已回: {total_collected:,.0f} | 未回: {total_receivable - total_collected:,.0f}")
+        lines.append(f"\n回款率: {rate:.1f}% | 已回: {total_collected:,.0f} | 未回: {total_receivable - total_collected:,.0f}")
+
+    # 库存预警
+    if inv_alert_count > 0:
+        lines.append(f"\n库存预警: {inv_alert_count} 批次临期或过期，请通知仓库主管")
+
+    # 欠款排行
+    if debt_top is not None and len(debt_top) > 0:
+        lines.append("\n需催收客户:")
+        for _, row in debt_top.head(3).iterrows():
+            lines.append(f"  {row['客户']} — 未回款 {row['未回款']:,.0f} 元")
 
     return "\n".join(lines)

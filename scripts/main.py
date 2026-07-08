@@ -288,7 +288,10 @@ report = f"""# 仲景堂医疗器械销售数据分析报告
 if args.send:
     logger.info("===== 发送报告 =====")
     from send_report import summary_report, send_email
-    summary = summary_report(monthly, top_products, total_receivable, total_collected)
+    alert_n = len(inv[inv["expiry_status"] != "正常"]) if not inv.empty and "expiry_status" in inv.columns else 0
+    summary = summary_report(monthly, top_products, total_receivable, total_collected,
+                             inv_alert_count=alert_n,
+                             debt_top=debt_top if "debt_top" in dir() else None)
     subject = f"仲景堂销售月报 — {datetime.now().strftime('%Y年%m月')}"
     send_email(subject, summary)
     logger.info(f"  报告摘要:\n{summary}")
