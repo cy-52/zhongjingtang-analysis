@@ -14,20 +14,21 @@ def send_email(subject, body, to_emails=None):
     smtp_user = os.getenv("SMTP_USER", "")
     smtp_pass = os.getenv("SMTP_PASSWORD", "")
 
+    if not to_emails:
+        to_emails = [smtp_user]  # 没指定收件人就发给自己
+
     if not smtp_host or not smtp_user:
-        print(f"[通知] 邮件未配置（SMTP_HOST 为空），报告已生成但未发送")
-        print(f"[通知] 报告摘要:\n{body[:500]}")
+        print(f"[通知] 邮件未配置，报告摘要:\n{body[:500]}")
         return False
 
     msg = MIMEMultipart()
     msg["From"] = smtp_user
-    msg["To"] = ", ".join(to_emails or [])
+    msg["To"] = ", ".join(to_emails)
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain", "utf-8"))
 
     try:
-        server = smtplib.SMTP(smtp_host, 587, timeout=10)
-        server.starttls()
+        server = smtplib.SMTP_SSL(smtp_host, 465, timeout=10)
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, to_emails, msg.as_string())
         server.quit()
