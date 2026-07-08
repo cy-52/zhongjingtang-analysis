@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import pytest
 import pandas as pd
 from db_loader import (load_products, load_customers, load_orders,
                        load_inventory, load_collections, load_dealer_orders)
@@ -58,7 +59,10 @@ def test_load_inventory():
 
 
 def test_load_dealer_orders():
-    """经销商订单: 从 Excel 加载，有 channel 标签"""
+    """经销商订单: 从 Excel 加载，有 channel 标签。文件不存在则跳过"""
+    filepath = Path(__file__).parent.parent / "data" / "dealer_orders.xlsx"
+    if not filepath.exists():
+        pytest.skip("经销商 Excel 文件不存在（CI 环境无此文件）")
     df = load_dealer_orders()
     assert len(df) > 0, "经销商订单不应为空"
     assert "channel" in df.columns
